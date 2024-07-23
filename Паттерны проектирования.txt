@@ -1,3 +1,123 @@
-                                                                                        Паттерны проектирования
+                                                                      Паттерны проектирования.
+--- Порождающие паттерны - описывают удачные решения, связанные с созданием объектов:
+    
+    !!! Singleton:
+Неудачное решение: отказаться от создания объектов, просто создать класс у которого все методы статические.
+Удачное решение: создать единственный объект класса и хранить его в статической переменной. Запретить создание второго объекта этого класса.
 
-!!! Singleton:
+Синглтон — это шаблон (паттерн) проектирования, который делает две вещи:
+  1. Дает гарантию, что у класса будет всего один экземпляр класса.
+  2. Предоставляет глобальную точку доступа к экземпляру данного класса.
+
+Отсюда — две особенности, характерные для практически каждой реализации паттерна синглтон: 
+  1. Приватный конструктор. Ограничивает возможность создания объектов класса за пределами самого класса.
+  2. Публичный статический метод, который возвращает экземпляр класса. Данный метод называют getInstance. Это глобальная точка доступа к экземпляру класса.
+
++Плюсы:
+1. Дает гарантию, что у класса будет всего один экземпляр класса.
+2. Предоставляет глобальную точку доступа к экземпляру данного класса.
+
+-Минусы: 
+1. Синглтон нарушает SRP (Single Responsibility Principle) — класс синглтона, помимо непосредственных обязанностей, занимается еще и контролированием количества своих экземпляров.
+2. Зависимость обычного класса или метода от синглтона не видна в публичном контракте класса.
+3. Глобальные переменные это плохо. Синглтон превращается в итоге в одну здоровенную глобальную переменную.
+4. Наличие синглтона снижает тестируемость приложения в целом и классов, которые используют синглтон, в частности.
+
+Пример Lazy initialization Singleton:
+
+public class Singleton {
+  private static Singleton INSTANCE;
+
+  private Singleton() {}
+
+  public static Singleton getInstance() {
+    if (INSTANCE == null) {
+      INSTANCE = new Singleton();
+    }
+    return INSTANCE;
+  }
+}
+____________________________________________________________________________________________________________________________________________________________________
+
+    !!! Factory:
+
+Фабрика — это шаблон проектирования, который помогает решить проблему создания различных объектов в зависимости от некоторых условий. 
+
+Общий кофейный класс:
+public class Coffee {
+    public void grindCoffee(){
+        // перемалываем кофе
+    }
+    public void makeCoffee(){
+        // делаем кофе
+    }
+    public void pourIntoCup(){
+        // наливаем в чашку
+    }
+}
+
+Его наследники:
+public class Americano extends Coffee {}
+public class Cappuccino extends Coffee {}
+public class CaffeLatte extends Coffee {}
+public class Espresso extends Coffee {}
+
+Наши клиенты будут заказывать какой-либо вид кофе, и эту информацию нужно передавать программе. Это можно сделать разными способами, например использовать String. Но лучше всего для этих целей подойдет enum. Создадим enum и определим в нем типы кофе, на которые мы принимаем заказы: :
+public enum CoffeeType {
+    ESPRESSO,
+    AMERICANO,
+    CAFFE_LATTE,
+    CAPPUCCINO
+}
+
+Класс-фабрика:
+public class SimpleCoffeeFactory {
+    public Coffee createCoffee (CoffeeType type) {
+        Coffee coffee = null;
+
+        switch (type) {
+            case AMERICANO:
+                coffee = new Americano();
+                break;
+            case ESPRESSO:
+                coffee = new Espresso();
+                break;
+            case CAPPUCCINO:
+                coffee = new Cappucino();
+                break;
+            case CAFFE_LATTE:
+                coffee = new CaffeLatte();
+                break;
+        }
+
+        return coffee;
+    }
+}
+
+Итоговый класс кофейни:
+public class CoffeeShop {
+
+    private final SimpleCoffeeFactory coffeeFactory;
+
+    public CoffeeShop(SimpleCoffeeFactory coffeeFactory) {
+        this.coffeeFactory = coffeeFactory;
+    }
+
+    public Coffee orderCoffee(CoffeeType type) {
+        Coffee coffee = coffeeFactory.createCoffee(type);
+        coffee.grindCoffee();
+        coffee.makeCoffee();
+        coffee.pourIntoCup();
+
+        System.out.println("Вот ваш кофе! Спасибо, приходите еще!");
+        return coffee;
+    }
+}
+
+5 шагов к открытию собственной фабрики:
+  -Шаг 1. У тебя в программе класс с несколькими потомками.
+  -Шаг 2. Ты создаешь enum, в котором определяешь enum-переменную для каждого класса-наследника.
+  -Шаг 3. Ты строишь свою фабрику. Называешь её MyClassFactory.
+  -Шаг 4. Ты создаешь в своей фабрике метод createMyClass, который принимает в себя переменную-enum MyClassType.
+  -Шаг 5. Ты пишешь в теле метода блок switch-case, в котором перебираешь все enum значения и создаешь экземпляр класса, соответствующий enum значению.
+  
